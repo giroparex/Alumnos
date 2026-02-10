@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student JSON Manager Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+
+    @media print {
+      body {
+        background-color: white !important;
+      }
+      /* Ocultar elementos innecesarios al imprimir */
+      nav, 
+      .fixed, 
+      button, 
+      input[type="file"],
+      .bg-white.rounded-2xl.shadow-sm.border.p-5, /* Barra de búsqueda y botones */
+      .group\/avatar div, /* Overlay de la cámara */
+      select {
+        display: none !important;
+      }
+      
+      /* Asegurar que el contenido ocupe todo el ancho */
+      main {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+
+      .bg-white.rounded-2xl.border {
+        box-shadow: none !important;
+        border: 1px solid #eee !important;
+        break-inside: avoid;
+        margin-bottom: 10px !important;
+      }
+
+      /* Mostrar valores de inputs y selectores como texto plano en impresión */
+      input, select {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+  }
+}
+</script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
