@@ -2,72 +2,77 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Student } from "../types";
 
-// Always use process.env.API_KEY directly when initializing the GoogleGenAI client instance.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getApiKey = () => {
+  try {
+    // Intentamos obtener la clave de las variables de entorno si existen
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const apiKey = getApiKey();
+// Inicializamos la IA solo si tenemos la clave, si no, devolvemos null de forma segura
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const COURSE_OPTIONS = ["LUNES A VIERNES", "V, S Y D", "INTENSIVO 1", "INTENSIVO 2"];
 
 export const generateSampleStudents = async (count: number = 5): Promise<Student[]> => {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Genera una lista de ${count} objetos de estudiantes realistas en formato JSON. Los nombres deben ser comunes en español. El campo 'photo' debe ser una cadena vacía o una URL de placeholder. Incluye dos campos de teléfono (phone1 y phone2) y un campo 'course' que debe ser uno de los siguientes valores exactos: ${COURSE_OPTIONS.join(', ')}.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING },
-            name: { type: Type.STRING },
-            age: { type: Type.NUMBER },
-            email: { type: Type.STRING },
-            phone1: { type: Type.STRING },
-            phone2: { type: Type.STRING },
-            course: { type: Type.STRING, enum: COURSE_OPTIONS },
-            photo: { type: Type.STRING },
-          },
-          required: ["id", "name", "age", "email", "phone1", "phone2", "course"],
-        },
-      },
-    },
-  });
+  if (!ai) {
+    console.warn("IA no disponible: No se encontró API_KEY");
+    throw new Error("La función de IA requiere una API Key configurada en el servidor.");
+  }
 
   try {
-    const data = JSON.parse(response.text || '[]');
-    return data;
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Genera una lista de ${count} objetos de estudiantes en formato JSON. Cursos disponibles: ${COURSE_OPTIONS.join(', ')}.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              name: { type: Type.STRING },
+              age: { type: Type.NUMBER },
+              email: { type: Type.STRING },
+              phone1: { type: Type.STRING },
+              phone2: { type: Type.STRING },
+              course: { type: Type.STRING, enum: COURSE_OPTIONS },
+              photo: { type: Type.STRING },
+            },
+            required: ["id", "name", "age", "email", "phone1", "phone2", "course"],
+          },
+        },
+      },
+    });
+
+    return JSON.parse(response.text || '[]');
   } catch (error) {
-    console.error("Error al parsear la respuesta de la IA", error);
+    console.error("Error en Gemini:", error);
     return [];
   }
 };
 
 export const refineStudentData = async (students: Student[]): Promise<Student[]> => {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Refina esta lista de estudiantes: estandariza nombres, verifica edades y asegura que los teléfonos tengan un formato consistente. Asegúrate de que el campo 'course' sea uno de: ${COURSE_OPTIONS.join(', ')}.
-    Datos: ${JSON.stringify(students)}`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING },
-            name: { type: Type.STRING },
-            age: { type: Type.NUMBER },
-            email: { type: Type.STRING },
-            phone1: { type: Type.STRING },
-            phone2: { type: Type.STRING },
-            course: { type: Type.STRING, enum: COURSE_OPTIONS },
-            photo: { type: Type.STRING },
-          },
-          required: ["id", "name", "age", "email", "phone1", "phone2", "course"],
-        },
-      },
-    },
-  });
+  if (!ai) return students;
 
-  return JSON.parse(response.text || JSON.stringify(students));
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Limpia y profesionaliza los nombres y datos de este JSON de estudiantes: ${JSON.stringify(students)}`,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    return JSON.parse(response.text || JSON.stringify(students));
+  } catch (error) {
+    return students;
+  }
 };
